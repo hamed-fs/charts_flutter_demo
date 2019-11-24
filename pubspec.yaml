@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  charts_flutter: any
 
   cupertino_icons: ^0.1.2
 
