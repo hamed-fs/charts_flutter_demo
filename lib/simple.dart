@@ -21,10 +21,11 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
     includePoints: true,
     stacked: false,
     roundEndCaps: true,
-    // dashPattern: [1, 0, 0, 0, 0, 0, 0, 1],
-    radiusPx: 3.0,
-    strokeWidthPx: 2.0,
+    // dashPattern: [1, 0],
+    radiusPx: 3.5,
+    strokeWidthPx: 3.0,
   );
+
   List<charts.Series<TimeSeriesSales, DateTime>> seriesData = List<charts.Series<TimeSeriesSales, DateTime>>();
   List<charts.Series<TimeSeriesSales, DateTime>> seriesData2 = List<charts.Series<TimeSeriesSales, DateTime>>();
 
@@ -118,7 +119,7 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
           ),
         ),
         SizedBox(height: 32.0),
-        Text(_measures.toString())
+        Text(_measures == null ? '' : _measures.toString())
       ],
     );
   }
