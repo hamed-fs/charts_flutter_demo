@@ -1,7 +1,9 @@
 import 'dart:math';
-
-import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/material.dart';
+
+import 'package:charts_flutter/flutter.dart';
+
+import 'package:charts_flutter_demo/custom_circle_symbol_renderer.dart';
 
 class SimpleLineChart extends StatefulWidget {
   @override
@@ -15,7 +17,7 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
   DateTime _time;
   Map<String, num> _measures;
 
-  charts.LineRendererConfig<DateTime> _lineRendererConfig = charts.LineRendererConfig(
+  LineRendererConfig<DateTime> _lineRendererConfig = LineRendererConfig(
     includeArea: false,
     includeLine: true,
     includePoints: true,
@@ -26,8 +28,8 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
     strokeWidthPx: 3.0,
   );
 
-  List<charts.Series<TimeSeriesSales, DateTime>> seriesData = List<charts.Series<TimeSeriesSales, DateTime>>();
-  List<charts.Series<TimeSeriesSales, DateTime>> seriesData2 = List<charts.Series<TimeSeriesSales, DateTime>>();
+  List<Series<TimeSeriesSales, DateTime>> seriesData = List<Series<TimeSeriesSales, DateTime>>();
+  List<Series<TimeSeriesSales, DateTime>> seriesData2 = List<Series<TimeSeriesSales, DateTime>>();
 
   final dataXY = [
     TimeSeriesSales(DateTime(2017, 10, 1), 20),
@@ -52,20 +54,20 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
     super.initState();
   }
 
-  static List<charts.Series<TimeSeriesSales, DateTime>> _createSampleData(List<TimeSeriesSales> data) {
+  static List<Series<TimeSeriesSales, DateTime>> _createSampleData(List<TimeSeriesSales> data) {
     List<TimeSeriesSales> data2 = [TimeSeriesSales(data.first.time, data.last.sales), TimeSeriesSales(data.last.time, data.last.sales)];
 
     return [
-      charts.Series<TimeSeriesSales, DateTime>(
+      Series<TimeSeriesSales, DateTime>(
         id: 'Barrier',
-        colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
+        colorFn: (_, __) => MaterialPalette.green.shadeDefault,
         domainFn: (TimeSeriesSales sales, _) => sales.time,
         measureFn: (TimeSeriesSales sales, _) => sales.sales,
         data: data2,
       ),
-      charts.Series<TimeSeriesSales, DateTime>(
+      Series<TimeSeriesSales, DateTime>(
         id: 'Sample Data',
-        colorFn: (_, __) => charts.MaterialPalette.black,
+        colorFn: (_, __) => MaterialPalette.black,
         domainFn: (TimeSeriesSales sales, _) => sales.time,
         measureFn: (TimeSeriesSales sales, _) => sales.sales,
         data: data,
@@ -75,7 +77,7 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
 
   Stream<TimeSeriesSales> createDataTimesStream() async* {
     while (true) {
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(Duration(seconds: 3));
 
       _lastValue = Random().nextBool() ? _lastValue + Random().nextInt(5) : _lastValue - Random().nextInt(5);
 
@@ -84,27 +86,6 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
   }
 
   Stream<TimeSeriesSales> dataStream;
-
-  _onSelectionChanged(charts.SelectionModel model) {
-    final selectedDatum = model.selectedDatum;
-
-    DateTime time;
-    final measures = <String, num>{};
-
-    if (selectedDatum.isNotEmpty) {
-      time = selectedDatum.first.datum.time;
-      selectedDatum.forEach((charts.SeriesDatum datumPair) {
-        measures[datumPair.series.displayName] = datumPair.datum.sales;
-      });
-    }
-
-    setState(() {
-      _time = time;
-      _measures = measures;
-
-      _pause = !_pause;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,28 +105,36 @@ class _SimpleLineChartState extends State<SimpleLineChart> {
     );
   }
 
-  charts.TimeSeriesChart buildTimeSeriesChart() {
-    return charts.TimeSeriesChart(
+  var renderer = CustomCircleSymbolRenderer("");
+
+  TimeSeriesChart buildTimeSeriesChart() {
+    return TimeSeriesChart(
       seriesData,
       animate: true,
-      // domainAxis: charts.EndPointsTimeAxisSpec(),
+      // domainAxis: EndPointsTimeAxisSpec(),
       defaultRenderer: _lineRendererConfig,
       behaviors: [
-        charts.PanAndZoomBehavior(),
-        charts.SeriesLegend(position: charts.BehaviorPosition.bottom),
-        charts.SlidingViewport(),
-        charts.LinePointHighlighter(
-          showHorizontalFollowLine: charts.LinePointHighlighterFollowLineType.nearest,
-          showVerticalFollowLine: charts.LinePointHighlighterFollowLineType.nearest,
+        PanAndZoomBehavior(),
+        SeriesLegend(position: BehaviorPosition.bottom),
+        SlidingViewport(),
+        LinePointHighlighter(
+          symbolRenderer: renderer,
+          showHorizontalFollowLine: LinePointHighlighterFollowLineType.nearest,
+          showVerticalFollowLine: LinePointHighlighterFollowLineType.nearest,
           dashPattern: [1],
-          symbolRenderer: charts.RectSymbolRenderer(isSolid: false),
           drawFollowLinesAcrossChart: true,
         ),
       ],
       selectionModels: [
-        charts.SelectionModelConfig(
-          type: charts.SelectionModelType.info,
-          changedListener: _onSelectionChanged,
+        SelectionModelConfig(
+          type: SelectionModelType.info,
+          changedListener: (SelectionModel model) {
+            if (model.hasDatumSelection) {
+              setState(() {
+                renderer.text = (model.selectedSeries[0].measureFn(model.selectedDatum[0].index)).toString();
+              });
+            }
+          },
         ),
       ],
     );
